@@ -266,7 +266,10 @@ data "aws_iam_policy_document" "default" {
 resource "aws_elasticsearch_domain_policy" "default" {
   count           = module.this.enabled && (length(var.iam_authorizing_role_arns) > 0 || length(var.iam_role_arns) > 0) ? 1 : 0
   domain_name     = module.this.id
-  access_policies = join("", data.aws_iam_policy_document.default.*.json)
+  access_policies = jsonencode({
+    Version   = "2012-10-17"
+    Statement = flatten([for policy in data.aws_iam_policy_document.default : jsondecode(policy.json).Statement])
+  })
 }
 
 module "domain_hostname" {
